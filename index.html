@@ -10,178 +10,72 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        body { font-family: 'Prompt', sans-serif; background: #fdf2f8; color: #1f2937; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(147, 51, 234, 0.1); }
+        body { font-family: 'Prompt', sans-serif; transition: 0.4s; }
+        .light { background: #fdf2f8; color: #1f2937; }
+        .dark { background: #0f172a; color: #f8fafc; }
+        
+        .glass { backdrop-filter: blur(12px); border: 1px solid rgba(147, 51, 234, 0.2); }
+        .light .glass { background: rgba(255, 255, 255, 0.9); box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .dark .glass { background: rgba(30, 41, 59, 0.8); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+
         .hidden { display: none; }
-        .nav-btn { position: fixed; bottom: 25px; right: 25px; z-index: 100; transition: 0.3s; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2); }
-        .nav-btn:hover { transform: scale(1.1) rotate(-5deg); }
-        .step-card { animation: slideUp 0.5s ease-out; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .nav-btn { position: fixed; bottom: 30px; right: 30px; z-index: 50; transition: 0.3s; }
+        .nav-btn:hover { transform: scale(1.1); }
+        .book-card:hover { transform: translateY(-8px); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #9333ea; border-radius: 10px; }
     </style>
 </head>
-<body>
+<body class="light">
+
+    <header id="app-header" class="hidden fixed top-0 w-full z-[100] p-4 flex justify-between items-center px-6">
+        <h1 class="text-2xl font-bold text-purple-600">V Lib Thachang</h1>
+        <div class="flex items-center gap-4">
+            <button onclick="toggleTheme()" class="p-2 rounded-full glass text-xl">🌓</button>
+            <button onclick="handleLogout()" class="bg-red-500 text-white px-5 py-1.5 rounded-full font-bold shadow-md hover:bg-red-600 transition">ออก</button>
+        </div>
+    </header>
 
     <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
-        <div class="glass p-10 rounded-[3rem] shadow-2xl w-full max-w-md text-center border-b-8 border-purple-600 step-card">
-            <div class="flex justify-center mb-4">
-                <img src="https://cdn-icons-png.flaticon.com/512/3389/3389081.png" class="w-16 h-16" alt="logo">
-                <h1 class="text-4xl font-bold text-purple-600 ml-3">ท่าฉาง App</h1>
+        <div class="glass p-10 rounded-[3rem] w-full max-w-md text-center border-b-8 border-purple-600">
+            <div class="flex flex-col items-center mb-6">
+                <img src="https://cdn-icons-png.flaticon.com/512/3389/3389081.png" class="w-16 mb-4">
+                <h1 class="text-4xl font-bold text-purple-600">V Lib Thachang</h1>
+                <p class="opacity-60 text-sm mt-2">อ่าน เรียนรู้ และเล่นเกมสะสมแต้ม</p>
             </div>
-            <p class="opacity-60 mb-8 text-sm font-medium">อ่าน เรียนรู้ และเล่นเกมสะสมแต้ม</p>
-            <input type="email" id="email" placeholder="อีเมลของคุณ" class="w-full mb-4 p-4 rounded-2xl bg-gray-100 outline-none focus:ring-2 focus:ring-purple-400">
-            <input type="password" id="password" placeholder="รหัสผ่าน" class="w-full mb-6 p-4 rounded-2xl bg-gray-100 outline-none focus:ring-2 focus:ring-purple-400">
+            <input type="email" id="email" placeholder="อีเมลของคุณ" class="w-full mb-4 p-4 rounded-2xl bg-gray-100 dark:bg-gray-800 outline-none focus:ring-2 focus:ring-purple-400">
+            <input type="password" id="password" placeholder="รหัสผ่าน" class="w-full mb-6 p-4 rounded-2xl bg-gray-100 dark:bg-gray-800 outline-none focus:ring-2 focus:ring-purple-400">
             <button onclick="handleLogin()" class="w-full bg-purple-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-purple-700 transition">เข้าสู่ระบบ</button>
-            <button onclick="handleRegister()" class="mt-4 text-purple-500 text-sm font-semibold">สมัครสมาชิกใหม่</button>
+            <button onclick="handleRegister()" class="mt-4 text-purple-500 text-sm font-semibold hover:underline">สมัครสมาชิกใหม่</button>
         </div>
     </div>
 
-    <div id="intro-screen" class="hidden min-h-screen p-6 flex items-center justify-center">
-        <div class="glass max-w-2xl p-10 rounded-[3.5rem] shadow-2xl border-t-8 border-yellow-400 step-card">
-            <h2 class="text-3xl font-bold text-purple-600 mb-8 text-center">ข้อมูลท่าฉาง 100%</h2>
-            
-            <div class="bg-yellow-50 p-8 rounded-3xl mb-8 text-center italic border border-yellow-200">
-                <h3 class="font-bold text-yellow-700 mb-3 text-xl">✨ คำขวัญอำเภอท่าฉาง ✨</h3>
-                <p class="text-lg leading-relaxed text-gray-700">"กะปิหอมสดชื่น รื่นรมย์ชมนกน้ำ<br>เลิศล้ำศิลปะ สระน้ำร้อนธรรมชาติ"</p>
+    <div id="intro-screen" class="hidden min-h-screen pt-24 p-6 flex items-center justify-center">
+        <div class="glass max-w-2xl p-10 rounded-[3.5rem] border-t-8 border-yellow-400 text-center">
+            <h2 class="text-3xl font-bold text-purple-600 mb-8">ยินดีต้อนรับสู่ท่าฉาง</h2>
+            <div class="bg-yellow-100 dark:bg-yellow-900/30 p-8 rounded-3xl mb-8 italic border border-yellow-200">
+                <h3 class="font-bold text-yellow-700 dark:text-yellow-400 mb-2 text-xl">คำขวัญอำเภอท่าฉาง</h3>
+                <p class="text-lg">"กะปิหอมสดชื่น รื่นรมย์ชมนกน้ำ<br>เลิศล้ำศิลปะ สระน้ำร้อนธรรมชาติ"</p>
             </div>
-
-            <div class="space-y-5 text-gray-700 leading-relaxed">
-                <h3 class="font-bold text-2xl text-purple-500 border-b-2 border-purple-100 inline-block pb-1">📖 ประวัติอำเภอท่าฉาง</h3>
-                <p>อำเภอท่าฉาง มีชื่อเสียงด้านประวัติศาสตร์มาตั้งแต่สมัยต้นกรุงรัตนโกสินทร์ เดิมเป็นแหล่งปลูกข้าวที่สำคัญที่สุดแห่งหนึ่งของลุ่มแม่น้ำพุมดวง</p>
-                <p>ชื่อ <b>"ท่าฉาง"</b> มาจากพื้นที่ริมน้ำที่เป็นจุดตั้งของ <b>"ฉางข้าวหลวง"</b> เพื่อรวบรวมข้าวเปลือกจากชาวบ้านเตรียมส่งส่วยเข้าพระนครโดยทางเรือ ท่าเรือที่คนมารวมตัวกันหน้าฉางข้าวแห่งนี้จึงถูกเรียกว่า "ท่าฉาง" จนถึงปัจจุบันครับ</p>
+            <div class="text-left space-y-4 opacity-90">
+                <h3 class="font-bold text-xl text-purple-500 underline">ประวัติโดยสังเขป</h3>
+                <p>คำว่า <b>"ท่าฉาง"</b> มีที่มาจากในอดีตบริเวณนี้เป็นที่ตั้งของฉางข้าวหลวงริมแม่น้ำพุมดวง เพื่อรวบรวมข้าวเปลือกส่งส่วยเข้าสู่เมืองหลวง ท่าเรือหน้าฉางข้าวแห่งนี้จึงเป็นศูนย์กลางความเจริญของชุมชนสืบต่อมาครับ</p>
             </div>
-            
-            <button onclick="goTo('library')" class="mt-10 w-full bg-purple-600 text-white font-bold py-5 rounded-2xl shadow-xl hover:bg-purple-700 transition text-lg">เข้าสู่หน้าคลังความรู้ ➡️</button>
+            <button onclick="goTo('library')" class="mt-10 w-full bg-purple-600 text-white font-bold py-5 rounded-2xl shadow-xl hover:bg-purple-700 transition text-lg">เข้าสู่หน้าหลัก ➡️</button>
         </div>
     </div>
 
-    <div id="library-screen" class="hidden min-h-screen p-6 pb-28">
-        <nav class="flex justify-between items-center mb-10 px-4">
-            <h2 class="text-3xl font-bold text-purple-600">📚 คลังความรู้ V Lib</h2>
-            <div id="pts-display" class="bg-yellow-400 text-white px-6 py-2 rounded-full font-bold shadow-md text-lg">🪙 0 แต้ม</div>
-        </nav>
-        
-        <div class="flex gap-3 overflow-x-auto mb-10 pb-2 no-scrollbar">
-            <button onclick="filterBooks('ทั้งหมด')" class="cat-btn active bg-purple-600 text-white px-6 py-2 rounded-full font-bold shadow-sm">ทั้งหมด</button>
-            <button onclick="filterBooks('นิทาน')" class="cat-btn glass px-6 py-2 rounded-full font-bold">นิทาน</button>
-            <button onclick="filterBooks('ท้องถิ่น')" class="cat-btn glass px-6 py-2 rounded-full font-bold">ความรู้ท้องถิ่น</button>
-            <button onclick="filterBooks('ความรู้ทั่วไป')" class="cat-btn glass px-6 py-2 rounded-full font-bold">ความรู้ทั่วไป</button>
-        </div>
-
-        <div id="book-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
-        
-        <button onclick="goTo('game')" class="nav-btn bg-white p-6 rounded-full border-4 border-purple-500 text-3xl">🎮</button>
-    </div>
-
-    <div id="game-screen" class="hidden min-h-screen p-6 flex items-center justify-center">
-        <div class="glass w-full max-w-xl p-12 rounded-[3.5rem] text-center shadow-2xl relative border-t-8 border-pink-500">
-            <h2 class="text-4xl font-bold text-purple-600 mb-4">แฟนพันธุ์แท้ V Lib 🎮</h2>
-            <p class="mb-10 text-lg opacity-80 font-medium">ตอบคำถาม 10 ข้อเพื่อรับ 50 แต้ม!</p>
-            <div id="quiz-area">
-                <button onclick="alert('ระบบเกมกำลังเปิดให้บริการเร็วๆ นี้!')" class="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-12 py-5 rounded-3xl font-bold text-2xl shadow-xl hover:scale-105 transition">เริ่มเล่นเกม!</button>
+    <div id="library-screen" class="hidden min-h-screen pt-28 p-6 pb-32">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold">คลังหนังสือ V Lib</h2>
+                <div id="pts-box" class="bg-yellow-400 text-white px-6 py-2 rounded-full font-bold text-lg shadow-lg">🪙 0</div>
             </div>
             
-            <button onclick="goTo('library')" class="nav-btn bg-white p-6 rounded-full border-4 border-yellow-500 text-3xl">📖</button>
-        </div>
-    </div>
-
-    <div id="modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-        <div class="glass w-full max-w-2xl max-h-[85vh] overflow-y-auto p-12 rounded-[3.5rem] relative">
-            <button onclick="closeModal()" class="absolute top-6 right-8 text-4xl text-gray-400 hover:text-red-500">&times;</button>
-            <div id="modal-content" class="prose max-w-none text-lg leading-relaxed"></div>
-            <button id="claim-btn" class="w-full mt-10 bg-green-500 text-white font-bold py-5 rounded-2xl shadow-xl text-xl hover:bg-green-600 transition">ยืนยันการอ่าน รับแต้ม</button>
-        </div>
-    </div>
-
-    <script>
-        // ใส่ Firebase Config ของคุณที่นี่
-        const firebaseConfig = {
-            apiKey: "AIzaSyAR2-lI9YULz5J0OZNBcKk_oJYtJANX8XA",
-            authDomain: "thachang-library.firebaseapp.com",
-            databaseURL: "https://thachang-library-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "thachang-library",
-            storageBucket: "thachang-library.firebasestorage.app",
-            messagingSenderId: "172018694224",
-            appId: "1:172018694224:web:e1c58a5836f849496db955"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.database();
-
-        // 📚 ข้อมูลเนื้อหาหนังสือ 100% (นิทาน/ความรู้)
-        const ALL_BOOKS = [
-            { id: 1, title: "ตำนานฉางข้าวหลวง", cat: "ท้องถิ่น", icon: "🏛️", pts: 40, text: "<h2>🏛️ ความลับของฉางข้าวหลวง</h2><p>ในยุคก่อนการพัฒนาถนนหนทาง การคมนาคมหลักคือทางน้ำ แม่น้ำพุมดวงจึงเปรียบเสมือนทางด่วนของยุคสมัยนั้น...</p><p><b>จุดกำเนิด:</b> เพื่อความเป็นระเบียบในการจัดการส่วยข้าว จึงมีการตั้งฉางขนาดใหญ่ขึ้นที่นี่ และกลายเป็นศูนย์กลางเศรษฐกิจในยุคนั้นครับ</p>" },
-            { id: 2, title: "กะปิท่าฉาง GI", cat: "ท้องถิ่น", icon: "🦐", pts: 45, text: "<h2>🦐 ภูมิปัญญาตัวเคย</h2><p>ความโดดเด่นของกะปิท่าฉางคือการใช้ 'ตัวเคย' สดๆ จากแหล่งน้ำกร่อยที่มีสารอาหารสมบูรณ์ นำมาหมักด้วยเกลือสมุทรบริสุทธิ์...</p><p><b>ความรู้เพิ่มเติม:</b> กะปิที่ดีต้องมีสีชมพูอมม่วง กลิ่นหอมนวล ไม่ฉุนจัด และเนื้อเนียนละเอียดครับ</p>" },
-            { id: 3, title: "กระต่ายกับเต่า", cat: "นิทาน", icon: "🐢", pts: 10, text: "<h2>🐢 บทเรียนแห่งความพยายาม</h2><p>นิทานเรื่องนี้สอนให้เรารู้ว่าพรสวรรค์ที่มี (ความเร็วของกระต่าย) หากขาดซึ่งความมีวินัยและความสม่ำเสมอ ก็อาจพ่ายแพ้ต่อความมุ่งมั่น (ความช้าแต่ไม่หยุดของเต่า) ได้เสมอครับ</p>" },
-            { id: 4, title: "รอบรู้ดวงดาว", cat: "ความรู้ทั่วไป", icon: "🌌", pts: 20, text: "<h2>🌌 มหัศจรรย์ดวงดาว</h2><p>โลกของเราเป็นเพียงส่วนเสี้ยวเล็กๆ ในจักรวาล ดาวพฤหัสบดีคือพี่ใหญ่ที่มีขนาดใหญ่กว่าโลกถึง 1,300 เท่า และทำหน้าที่เหมือนโล่ป้องกันอุกกาบาตให้โลกด้วยแรงดึงดูดมหาศาลครับ</p>" },
-            { id: 5, title: "นิทานสังข์ทอง", cat: "นิทาน", icon: "🐚", pts: 25, text: "<h2>🐚 สังข์ทอง: คุณค่าที่อยู่ภายใน</h2><p>พระสังข์ผู้ต้องคำสาปให้เกิดมาเป็นหอยสังข์ และภายหลังสวมรูปเงาะป่าเพื่ออำพรางความดีงามและรูปทองไว้ภายใน สอนใจให้เราไม่ตัดสินคนจากรูปกายภายนอกครับ</p>" }
-        ];
-
-        function goTo(screen) {
-            document.querySelectorAll('div[id$="-screen"]').forEach(s => s.classList.add('hidden'));
-            document.getElementById(screen + '-screen').classList.remove('hidden');
-        }
-
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                goTo('intro'); // หลัง Login เข้าหน้าประวัติก่อน
-                db.ref('users/' + user.uid).on('value', s => {
-                    document.getElementById('pts-display').innerText = `🪙 ${s.val()?.points || 0} แต้ม`;
-                });
-                renderBooks(ALL_BOOKS);
-            } else {
-                goTo('login');
-            }
-        });
-
-        function renderBooks(data) {
-            const grid = document.getElementById('book-grid');
-            grid.innerHTML = data.map(b => `
-                <div class="glass p-8 rounded-[2.5rem] shadow hover:-translate-y-2 transition cursor-pointer text-center" onclick="openBook(${b.id})">
-                    <div class="text-6xl mb-4">${b.icon}</div>
-                    <span class="text-[11px] font-bold text-white bg-purple-500 px-3 py-1 rounded-full uppercase mb-3 inline-block">${b.cat}</span>
-                    <h3 class="font-bold text-xl mb-2">${b.title}</h3>
-                    <p class="text-sm opacity-60">+${b.pts} แต้มสะสม</p>
-                </div>
-            `).join('');
-        }
-
-        function filterBooks(cat) {
-            const data = cat === 'ทั้งหมด' ? ALL_BOOKS : ALL_BOOKS.filter(b => b.cat === cat);
-            renderBooks(data);
-            document.querySelectorAll('.cat-btn').forEach(btn => {
-                btn.classList.toggle('bg-purple-600', btn.innerText.includes(cat));
-                btn.classList.toggle('text-white', btn.innerText.includes(cat));
-            });
-        }
-
-        function openBook(id) {
-            const b = ALL_BOOKS.find(x => x.id === id);
-            document.getElementById('modal-content').innerHTML = b.text;
-            document.getElementById('claim-btn').onclick = () => {
-                db.ref('users/' + auth.currentUser.uid + '/points').transaction(p => (p || 0) + b.pts);
-                alert(`ยินดีด้วย! รับเพิ่ม +${b.pts} แต้ม`);
-                closeModal();
-            };
-            document.getElementById('modal').classList.remove('hidden');
-        }
-
-        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
-
-        async function handleLogin() {
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('password').value;
-            try { await auth.signInWithEmailAndPassword(e, p); } catch(err) { alert('ข้อมูลเข้าสู่ระบบไม่ถูกต้อง!'); }
-        }
-
-        async function handleRegister() {
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('password').value;
-            try {
-                const r = await auth.createUserWithEmailAndPassword(e, p);
-                await db.ref('users/' + r.user.uid).set({ points: 0 });
-                alert('สมัครสมาชิกสำเร็จ!');
-            } catch(err) { alert(err.message); }
-        }
-    </script>
-</body>
-</html>
+            <div class="flex gap-3 overflow-x-auto mb-10 no-scrollbar">
+                <button onclick="filterBooks('ทั้งหมด')" class="cat-btn bg-purple-600 text-white px-6 py-2 rounded-full font-bold">ทั้งหมด</button>
+                <button onclick="filterBooks('นิทาน')" class="cat-btn glass px-6 py-2 rounded-full font-bold">นิทาน</button>
+                <button onclick="filterBooks('ท้องถิ่น')" class="cat-btn glass px-6 py-2 rounded-full font-bold">ท้องถิ่น</button>
+                <button onclick="filterBooks('ความรู้ทั่วไป')" class="cat-btn glass px-6 py-2 rounded-full font-bold">ความรู้
